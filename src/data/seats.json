@@ -1,0 +1,49 @@
+{
+  "seat_availability": [
+    {
+      "schedule_id": "SCH001",
+      "available_seats": [
+        {"row": 1, "column": 1},
+        {"row": 1, "column": 2},
+        {"row": 2, "column": 3},
+        {"row": 3, "column": 4}
+      ],
+      "occupied_seats": [
+        {"row": 1, "column": 3},
+        {"row": 1, "column": 4},
+        {"row": 2, "column": 1},
+        {"row": 2, "column": 2}
+      ]
+    },
+    {
+      "schedule_id": "SCH002",
+      "available_seats": [
+        {"row": 1, "column": 1},
+        {"row": 2, "column": 2},
+        {"row": 3, "column": 3},
+        {"row": 4, "column": 4}
+      ],
+      "occupied_seats": [
+        {"row": 1, "column": 2},
+        {"row": 2, "column": 1},
+        {"row": 3, "column": 4},
+        {"row": 4, "column": 3}
+      ]
+    },
+    {
+      "schedule_id": "SCH003",
+      "available_seats": [
+        {"row": 1, "column": 1},
+        {"row": 1, "column": 2},
+        {"row": 2, "column": 3},
+        {"row": 3, "column": 4}
+      ],
+      "occupied_seats": [
+        {"row": 1, "column": 3},
+        {"row": 1, "column": 4},
+        {"row": 2, "column": 1},
+        {"row": 2, "column": 2}
+      ]
+    }
+  ]
+}
