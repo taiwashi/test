@@ -104,3 +104,75 @@ def save_snippet(file: func.Out[str], context) -> str:
     file.set(snippet_content_from_args)
     logging.info(f"Saved snippet: {snippet_content_from_args}")
     return f"Snippet '{snippet_content_from_args}' saved successfully"
+
+
+# Define tool properties for the movie retrieval tool
+movie_tool_properties = json.dumps([])
+
+@app.generic_trigger(
+    arg_name="context",
+    type="mcpToolTrigger",
+    toolName="get_movie_list",
+    description="Retrieve the list of movies.",
+    toolProperties=movie_tool_properties,
+)
+@app.generic_input_binding(
+    arg_name="file",
+    type="blob",
+    connection="AzureWebJobsStorage",
+    path="movies/movies.json",
+)
+def get_movie_list(file: func.InputStream, context) -> str:
+    """
+    Retrieves the list of movies from Azure Blob Storage.
+
+    Args:
+        file (func.InputStream): The input binding to read the movie list from Azure Blob Storage.
+        context: The trigger context containing the input arguments.
+
+    Returns:
+        str: The content of the movie list or an error message.
+    """
+    try:
+        movie_list_content = file.read().decode("utf-8")
+        logging.info(f"Retrieved movie list: {movie_list_content}")
+        return movie_list_content
+    except Exception as e:
+        logging.error(f"Error retrieving movie list: {str(e)}")
+        return json.dumps({"error": "Failed to retrieve movie list."})
+
+
+# Define tool properties for the movie schedule retrieval tool
+schedule_tool_properties = json.dumps([])
+
+@app.generic_trigger(
+    arg_name="context",
+    type="mcpToolTrigger",
+    toolName="get_movie_schedule",
+    description="Retrieve the movie schedule.",
+    toolProperties=schedule_tool_properties,
+)
+@app.generic_input_binding(
+    arg_name="file",
+    type="blob",
+    connection="AzureWebJobsStorage",
+    path="schedules/schedules.json",
+)
+def get_movie_schedule(file: func.InputStream, context) -> str:
+    """
+    Retrieves the movie schedule from Azure Blob Storage.
+
+    Args:
+        file (func.InputStream): The input binding to read the movie schedule from Azure Blob Storage.
+        context: The trigger context containing the input arguments.
+
+    Returns:
+        str: The content of the movie schedule or an error message.
+    """
+    try:
+        schedule_content = file.read().decode("utf-8")
+        logging.info(f"Retrieved movie schedule: {schedule_content}")
+        return schedule_content
+    except Exception as e:
+        logging.error(f"Error retrieving movie schedule: {str(e)}")
+        return json.dumps({"error": "Failed to retrieve movie schedule."})
