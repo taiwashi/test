@@ -171,8 +171,17 @@ def get_movie_schedule(file: func.InputStream, context) -> str:
     """
     try:
         schedule_content = file.read().decode("utf-8")
-        logging.info(f"Retrieved movie schedule: {schedule_content}")
-        return schedule_content
+        logging.info(f"Retrieved raw schedule content: {schedule_content}")
+
+        # Validate if the content is a valid JSON
+        try:
+            schedule_json = json.loads(schedule_content)
+            logging.info("Schedule content successfully parsed as JSON.")
+            return json.dumps(schedule_json)
+        except json.JSONDecodeError as json_error:
+            logging.error(f"Failed to parse schedule content as JSON: {str(json_error)}")
+            return json.dumps({"error": "Invalid JSON format in schedule content."})
+
     except Exception as e:
         logging.error(f"Error retrieving movie schedule: {str(e)}")
-        return json.dumps({"error": "Failed to retrieve movie schedule."})
+        return json.dumps({"error": "Failed to retrieve movie schedule.", "details": str(e)})
