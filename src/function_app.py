@@ -123,7 +123,7 @@ movie_tool_properties = json.dumps([])
     arg_name="file",
     type="blob",
     connection="AzureWebJobsStorage",
-    path="movies/movies.json",
+    path="accep-test/movies.json",
 )
 def get_movie_list(file: func.InputStream, context) -> str:
     """
@@ -159,7 +159,7 @@ schedule_tool_properties = json.dumps([])
     arg_name="file",
     type="blob",
     connection="AzureWebJobsStorage",
-    path="schedules/schedules.json",
+    path="accep-test/schedules.json",
 )
 def get_movie_schedule(file: func.InputStream, context) -> str:
     """
@@ -216,7 +216,7 @@ specification_tool_properties = json.dumps([
     arg_name="file",
     type="blob",
     connection="AzureWebJobsStorage",
-    path="movies/specifications.json",
+    path="accep-test/specifications.json",
 )
 def understand_specification(file: func.InputStream, context) -> str:
     """
@@ -258,3 +258,86 @@ def understand_specification(file: func.InputStream, context) -> str:
     except Exception as e:
         logging.error(f"Error processing specification: {str(e)}")
         return json.dumps({"error": f"Failed to process specification: {str(e)}"})
+
+
+# Define tool properties for the diff comparison tool
+diff_tool_properties = json.dumps([
+    ToolProperty("oldVersion", "string", "古いバージョンの仕様ID").to_dict(),
+    ToolProperty("newVersion", "string", "新しいバージョンの仕様ID").to_dict()
+])
+
+@app.generic_trigger(
+    arg_name="context",
+    type="mcpToolTrigger",
+    toolName="compare_specifications",
+    description="2つの仕様バージョン間の差分を比較します。",
+    toolProperties=diff_tool_properties,
+)
+@app.generic_input_binding(
+    arg_name="file",
+    type="blob",
+    connection="AzureWebJobsStorage",
+    path="accep-test/specifications.json",
+)
+def compare_specifications(file: func.InputStream, context) -> str:
+    """
+    2つの仕様バージョン間の差分を比較し、変更点を抽出します。
+
+    Args:
+        file (func.InputStream): 仕様情報を含むJSONファイル
+        context: トリガーコンテキスト（入力引数を含む）
+
+    Returns:
+        str: 差分情報をJSON形式で返します
+    """
+    try:
+        content = json.loads(context)
+        old_version = content["arguments"]["oldVersion"]
+        new_version = content["arguments"]["newVersion"]
+
+        if not validate_specification_id(old_version) or not validate_specification_id(new_version):
+            return json.dumps({"error": "Invalid specification ID format"})
+
+        specifications_data = json.loads(file.read().decode("utf-8"))
+        
+        old_spec = next(
+            (spec for spec in specifications_data 
+             if spec["specification_id"] == old_version),
+            None
+        )
+        
+        new_spec = next(
+            (spec for spec in specifications_data 
+             if spec["specification_id"] == new_version),
+            None
+        )
+
+        if not old_spec or not new_spec:
+            return json.dumps({"error": "One or both specifications not found"})
+
+        # 差分を計算
+        differences = {
+            "title_changed": old_spec["title"] != new_spec["title"],
+            "description_changed": old_spec["description"] != new_spec["description"],
+            "changes": {
+                "title": {
+                    "old": old_spec["title"],
+                    "new": new_spec["title"]
+                } if old_spec["title"] != new_spec["title"] else None,
+                "description": {
+                    "old": old_spec["description"],
+                    "new": new_spec["description"]
+                } if old_spec["description"] != new_spec["description"] else None
+            }
+        }
+
+        return json.dumps({
+            "diff_result": differences,
+            "old_version": old_version,
+            "new_version": new_version,
+            "comparison_date": content.get("timestamp", "")
+        })
+
+    except Exception as e:
+        logging.error(f"Error comparing specifications: {str(e)}")
+        return json.dumps({"error": f"Failed to compare specifications: {str(e)}"})

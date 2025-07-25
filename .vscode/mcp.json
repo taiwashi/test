@@ -20,7 +20,7 @@
                //  "x-functions-key": "${input:functions-mcp-extension-system-key}"
            //  }
         // },
-        "local-mcp-function-test2": {
+        "local-mcp-function-test3": {
              "type": "sse",
              "url": "http://0.0.0.0:7071/runtime/webhooks/mcp/sse"
          }
