@@ -1,0 +1,37 @@
+[
+    {
+        "specification_id": "SPEC001",
+        "title": "ホームページ遷移",
+        "description": "ホームボタンを押すとホームページに遷移する",
+        "created_at": "2025-07-25",
+        "updated_at": "2025-07-25"
+    },
+    {
+        "specification_id": "SPEC002",
+        "title": "ログイン機能",
+        "description": "ログインボタンを押すとログインフォームが表示される",
+        "created_at": "2025-07-25",
+        "updated_at": "2025-07-25"
+    },
+    {
+        "specification_id": "SPEC003",
+        "title": "検索機能",
+        "description": "検索ボタンを押すと検索結果ページが表示される",
+        "created_at": "2025-07-25",
+        "updated_at": "2025-07-25"
+    },
+    {
+        "specification_id": "SPEC004",
+        "title": "商品詳細表示",
+        "description": "商品をクリックすると商品詳細ページが表示される",
+        "created_at": "2025-07-25",
+        "updated_at": "2025-07-25"
+    },
+    {
+        "specification_id": "SPEC005",
+        "title": "カート追加",
+        "description": "カートボタンを押すと商品がカートに追加される",
+        "created_at": "2025-07-25",
+        "updated_at": "2025-07-25"
+    }
+]
