@@ -2,6 +2,7 @@ import json
 import logging
 import re
 import os
+import datetime
 
 import azure.functions as func
 from azure.storage.blob import BlobServiceClient
@@ -341,3 +342,129 @@ def compare_specifications(file: func.InputStream, context) -> str:
     except Exception as e:
         logging.error(f"Error comparing specifications: {str(e)}")
         return json.dumps({"error": f"Failed to compare specifications: {str(e)}"})
+
+# Define tool properties for test item creation
+create_test_items_properties = json.dumps([
+    ToolProperty("specificationId", "string", "仕様書のID").to_dict(),
+    ToolProperty("pastTestItemId", "string", "過去の試験項目のID").to_dict()
+])
+
+@app.generic_trigger(
+    arg_name="context",
+    type="mcpToolTrigger",
+    toolName="create_test_items",
+    description="仕様書や過去の項目書を元に試験項目を作成します。",
+    toolProperties=create_test_items_properties,
+)
+@app.generic_input_binding(
+    arg_name="specifications",
+    type="blob",
+    connection="AzureWebJobsStorage",
+    path="accep-test/specifications.json",
+)
+@app.generic_input_binding(
+    arg_name="past_items",
+    type="blob",
+    connection="AzureWebJobsStorage",
+    path="accep-test/past_test_items.json",
+)
+@app.generic_output_binding(
+    arg_name="output_items",
+    type="blob",
+    connection="AzureWebJobsStorage",
+    path="accep-test/test_items/{mcptoolargs.specificationId}.json",
+)
+def create_test_items(specifications: func.InputStream, past_items: func.InputStream, output_items: func.Out[str], context) -> str:
+    """
+    仕様書と過去の試験項目を元に新しい試験項目を作成します。
+
+    Args:
+        specifications (func.InputStream): 仕様書データ
+        past_items (func.InputStream): 過去の試験項目データ
+        output_items (func.Out[str]): 出力する試験項目データ
+        context: トリガーコンテキスト
+
+    Returns:
+        str: 作成された試験項目のJSON文字列
+    """
+    try:
+        content = json.loads(context)
+        specification_id = content["arguments"]["specificationId"]
+        past_test_item_id = content["arguments"]["pastTestItemId"]
+
+        # バリデーション
+        if not validate_specification_id(specification_id):
+            return json.dumps({"error": "Invalid specification ID format"})
+        if not validate_test_item_id(past_test_item_id):
+            return json.dumps({"error": "Invalid test item ID format"})
+
+        # データ取得
+        specifications_data = json.loads(specifications.read().decode("utf-8"))
+        past_items_data = json.loads(past_items.read().decode("utf-8"))
+
+        # 該当データ検索
+        specification = next(
+            (spec for spec in specifications_data 
+             if spec["specification_id"] == specification_id),
+            None
+        )
+        past_item = next(
+            (item for item in past_items_data 
+             if item["test_item_id"] == past_test_item_id),
+            None
+        )
+
+        if not specification or not past_item:
+            return json.dumps({"error": "Specification or past test item not found"})
+
+        # 試験項目の生成
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        new_test_items = {
+            "test_item_id": f"TEST{int(specification_id[4:]):03d}",
+            "specification_id": specification_id,
+            "items": generate_test_items(specification, past_item),
+            "created_at": current_date,
+            "updated_at": current_date
+        }
+
+        # 結果の保存と返却
+        output_items.set(json.dumps(new_test_items))
+        return json.dumps({"testItems": new_test_items})
+
+    except Exception as e:
+        logging.error(f"Error creating test items: {str(e)}")
+        return json.dumps({"error": f"Failed to create test items: {str(e)}"})
+
+def validate_test_item_id(test_item_id: str) -> bool:
+    """試験項目IDのバリデーション"""
+    return bool(re.match(r"^TEST\d{3}$", test_item_id))
+
+def generate_test_items(specification: dict, past_item: dict) -> list:
+    """
+    仕様と過去の試験項目から新しい試験項目を生成します。
+
+    Args:
+        specification (dict): 仕様データ
+        past_item (dict): 過去の試験項目データ
+
+    Returns:
+        list: 生成された試験項目のリスト
+    """
+    base_items = []
+    
+    # 基本的な機能確認項目
+    base_items.append(f"{specification['title']}の動作を確認")
+    base_items.append(f"{specification['title']}の表示内容が正しいことを確認")
+    
+    # 過去の試験項目から関連する項目を追加
+    for item in past_item["items"]:
+        if any(keyword in item for keyword in [specification["title"], specification["description"]]):
+            base_items.append(item)
+    
+    # 仕様書から特定の動作に関する項目を生成
+    if "表示" in specification["description"]:
+        base_items.append(f"{specification['title']}の表示速度を確認")
+    if "遷移" in specification["description"]:
+        base_items.append(f"{specification['title']}の遷移先が正しいことを確認")
+    
+    return base_items
