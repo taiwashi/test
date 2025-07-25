@@ -1,142 +1,84 @@
 # インタフェース仕様書
 
-## 映画一覧の取得
-### リクエスト
+## 概要
+この仕様書は、MCP(Model Context Protocol)を使用した業務機能のインタフェースを定義します。各機能はJSON-RPC形式でリクエスト・レスポンスを行い、業務仕様書のデータ構造と整合性を保ちます。
+
+## インタフェース定義
+
+### 1. 仕様理解機能
+- **メソッド名**: `understand_specification`
+- **リクエスト**:
 ```json
 {
-  "jsonrpc": "2.0",
-  "method": "get_movie_list",
-  "params": {}
+    "jsonrpc": "2.0",
+    "method": "understand_specification",
+    "params": {
+        "specificationId": "string"
+    },
+    "id": 1
+}
+```
+- **レスポンス**:
+```json
+{
+    "jsonrpc": "2.0",
+    "result": {
+        "systemInfo": "object"
+    },
+    "id": 1
 }
 ```
 
-### レスポンス
+### 2. 差分把握機能
+- **メソッド名**: `get_differences`
+- **リクエスト**:
 ```json
 {
-  "jsonrpc": "2.0",
-  "result": {
-    "movies": [
-      {
-        "title": "インセプション",
-        "description": "夢の中でのスパイ活動を描いたサスペンス映画",
-        "rating": 4.5,
-        "cast": ["レオナルド・ディカプリオ", "ジョセフ・ゴードン＝レヴィット", "エレン・ペイジ"]
-      }
-    ]
-  }
+    "jsonrpc": "2.0",
+    "method": "get_differences",
+    "params": {
+        "pastTestItemId": "string",
+        "currentSpecificationId": "string"
+    },
+    "id": 2
+}
+```
+- **レスポンス**:
+```json
+{
+    "jsonrpc": "2.0",
+    "result": {
+        "differences": "object"
+    },
+    "id": 2
 }
 ```
 
-## 上映時間枠の表示
-### リクエスト
+### 3. 試験項目作成機能
+- **メソッド名**: `create_test_items`
+- **リクエスト**:
 ```json
 {
-  "jsonrpc": "2.0",
-  "method": "get_schedule",
-  "params": {
-    "movie_title": "インセプション"
-  }
+    "jsonrpc": "2.0",
+    "method": "create_test_items",
+    "params": {
+        "specificationId": "string",
+        "pastTestItemId": "string"
+    },
+    "id": 3
+}
+```
+- **レスポンス**:
+```json
+{
+    "jsonrpc": "2.0",
+    "result": {
+        "testItems": "array"
+    },
+    "id": 3
 }
 ```
 
-### レスポンス
-```json
-{
-  "jsonrpc": "2.0",
-  "result": {
-    "schedules": [
-      {
-        "schedule_id": "SCH67890",
-        "start_time": "2025-07-11T14:00:00Z",
-        "end_time": "2025-07-11T16:30:00Z",
-        "movie_title": "インセプション"
-      }
-    ]
-  }
-}
-```
-
-## 空席情報の取得
-### リクエスト
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "get_seat_availability",
-  "params": {
-    "schedule_id": "SCH67890"
-  }
-}
-```
-
-### レスポンス
-```json
-{
-  "jsonrpc": "2.0",
-  "result": {
-    "available_seats": [
-      {"row": 1, "column": 1},
-      {"row": 1, "column": 2},
-      {"row": 1, "column": 3}
-    ],
-    "occupied_seats": [
-      {"row": 1, "column": 4},
-      {"row": 1, "column": 5}
-    ]
-  }
-}
-```
-
-## 座席予約の確定
-### リクエスト
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "reserve_seat",
-  "params": {
-    "schedule_id": "SCH67890",
-    "seat_positions": [
-      {"row": 1, "column": 1},
-      {"row": 1, "column": 2}
-    ]
-  }
-}
-```
-
-### レスポンス
-```json
-{
-  "jsonrpc": "2.0",
-  "result": {
-    "reservation_id": "RES54321",
-    "reserved_seats": [
-      {"row": 1, "column": 1},
-      {"row": 1, "column": 2}
-    ],
-    "reservation_time": "2025-07-10T10:00:00Z"
-  }
-}
-```
-
-## レイトショー割引情報の提供
-### リクエスト
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "get_discount_info",
-  "params": {
-    "schedule_id": "SCH67890"
-  }
-}
-```
-
-### レスポンス
-```json
-{
-  "jsonrpc": "2.0",
-  "result": {
-    "discount_type": "レイトショー",
-    "applicable_time": "21:00以降",
-    "discount_rate": "20%"
-  }
-}
-```
+## 備考
+- 各メソッドは業務仕様書のデータ構造に基づいて設計されています。
+- JSON-RPC形式を採用し、リクエストとレスポンスの整合性を確保しています。

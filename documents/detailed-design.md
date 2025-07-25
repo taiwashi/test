@@ -1,49 +1,34 @@
 # 詳細設計書
 
-## 前提条件
-- データはAzure Blobの`movies`コンテナ配下のJSONファイルを読み書きする。
-- Blobへのアクセス方法は既存の`get_snippet`および`save_snippet`を参考にする。
-- リクエストパラメータに対して最低限のValidationを行う。
-- 作成した予約データは`src/data/reservations.jsonl`としてJSON List形式で保存する。
+## 概要
+この詳細設計書は、受入試験項目表の自動生成を実現するためのMCPツール群の処理フローを記述します。データはAzure Blob Storageのmoviesコンテナ配下のJSONファイルを読み書きします。
 
-## 機能設計
+## 機能別設計
 
-### 映画データ取得機能
-#### 処理フロー
-1. Azure Blobの`movies`コンテナから`movies.json`を取得。
-2. JSONデータをパースし、クライアントに返却。
-3. 必要に応じてリクエストパラメータのValidationを実施。
+### 1. 仕様理解機能
+- **処理フロー**:
+  1. リクエストパラメータ`specificationId`を受け取る。
+  2. `specificationId`のValidationを行い、形式が正しいことを確認する。
+  3. Azure Blob Storageのmoviesコンテナから仕様データを取得する。
+  4. 取得した仕様データを解析し、システム情報を抽出する。
+  5. 抽出したシステム情報をレスポンスとして返す。
 
-### 上映スケジュール取得機能
-#### 処理フロー
-1. Azure Blobの`movies`コンテナから`schedules.json`を取得。
-2. JSONデータをパースし、クライアントに返却。
-3. リクエストパラメータ（例: 日付範囲）のValidationを実施。
+### 2. 差分把握機能
+- **処理フロー**:
+  1. リクエストパラメータ`pastTestItemId`と`currentSpecificationId`を受け取る。
+  2. 各パラメータのValidationを行い、形式が正しいことを確認する。
+  3. Azure Blob Storageのmoviesコンテナから過去試験項目データと仕様データを取得する。
+  4. 取得したデータを比較し、差分情報を生成する。
+  5. 差分情報をレスポンスとして返す。
 
-### 座席状況取得機能
-#### 処理フロー
-1. Azure Blobの`movies`コンテナから`seats.json`を取得。
-2. JSONデータをパースし、クライアントに返却。
-3. リクエストパラメータ（例: 上映スケジュールID）のValidationを実施。
+### 3. 試験項目作成機能
+- **処理フロー**:
+  1. リクエストパラメータ`specificationId`と`pastTestItemId`を受け取る。
+  2. 各パラメータのValidationを行い、形式が正しいことを確認する。
+  3. Azure Blob Storageのmoviesコンテナから仕様データと過去試験項目データを取得する。
+  4. 取得したデータを基に試験項目を自動生成する。
+  5. 生成した試験項目をAzure Blob Storageに保存する。
+  6. 試験項目をレスポンスとして返す。
 
-### 予約データ作成機能
-#### 処理フロー
-1. クライアントからのリクエストを受け取り、リクエストパラメータのValidationを実施。
-2. 予約データをJSON形式で生成。
-3. 生成した予約データを`src/data/reservations.jsonl`に追記保存。
-4. 必要に応じてAzure Blobにアップロード。
-
-## Validation設計
-- リクエストパラメータの型チェック（例: 日付形式、文字列長）。
-- 必須項目の確認。
-- 不正な値に対するエラーメッセージの返却。
-
-## Azure Blobアクセス設計
-- `get_snippet`を使用してBlobからデータを取得。
-- `save_snippet`を使用してBlobにデータを保存。
-
-## ファイル構成
-- `movies.json`: 映画データ。
-- `schedules.json`: 上映スケジュールデータ。
-- `seats.json`: 座席状況データ。
-- `reservations.jsonl`: 予約データ（JSON List形式）。
+## 備考
+- Azure Blob Storageへのアクセス方法は既存の`get_snippet`および`save_snippet`を参考にする。
